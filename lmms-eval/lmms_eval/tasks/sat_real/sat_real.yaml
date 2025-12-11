@@ -1,0 +1,43 @@
+dataset_path: /home/jupyter/data_files/SAT_new
+dataset_name: "sat_real"
+task: "sat_real"
+dataset_kwargs:
+  token: True
+
+test_split: train # because it actually loads the test as "train"
+output_type: generate_until
+process_docs: !function utils.process_docs
+doc_to_visual: !function utils.sat_doc_to_visual
+doc_to_text: !function utils.sat_doc_to_text
+doc_to_target: !function utils.sat_doc_to_target
+process_results: !function utils.sat_process_results
+
+
+generation_kwargs:
+  max_new_tokens: 1024
+  temperature: 0
+  do_sample: False
+
+metric_list:
+  - metric: sat_score_overall
+    aggregation: !function utils.sat_aggregation 
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
+
+metadata:
+  - version: 0.0
+
+lmms_eval_specific_kwargs:
+  default:
+    prompt_mode: "videor1"
+  qwen2_5_vl_query:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatent:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatentsample:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatent_imonly:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatentdiscrete:
+    prompt_mode: "latents"

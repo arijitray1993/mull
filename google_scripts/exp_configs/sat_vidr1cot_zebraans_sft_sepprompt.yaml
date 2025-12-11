@@ -1,0 +1,20 @@
+run_name: 'sat_vidr1cot_zebraans_sft_sepprompt'
+
+train_dataset_args:
+  split: train
+  mix_datas:
+    'SAT': 0.4
+    'VideoR1': 0.3
+    'ZebraCOT': 0.3
+  sat_location: '/home/jupyter/data_files/SAT_new'
+  video_r1_location: '/home/jupyter/data_files/Video-R1-data/Video-R1-COT-165k.json'
+  zebracot_location: '/home/jupyter/data_files/Zebra-CoT'
+  mode: 'train'
+  r1_mode: True
+  no_zebracot_reason_mode: True
+  use_sep_text_reason_prompts: True
+
+freeze_vision: True
+
+model_name: Qwen2.5-VL-7B
+model_path: /home/jupyter/data_files/Qwen2.5-VL-7B-Instruct

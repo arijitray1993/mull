@@ -1,0 +1,16 @@
+run_name: 'sat_vidr1_sft_pause'
+
+resume_from_checkpoint: True
+
+train_dataset_args:
+  split: train
+  mix_datas:
+    'SAT': 0.8
+    'VideoR1': 0.2
+  sat_location: '/home/jupyter/data_files/SAT_new'
+  video_r1_location: '/home/jupyter/data_files/Video-R1-data/Video-R1-COT-165k.json'
+  pause_mode: True
+  query_mode: False
+
+model_name: Qwen2.5-QueryVL-7B
+model_path: /home/jupyter/data_files/Qwen2.5-VL-7B-COT-SFT

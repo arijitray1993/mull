@@ -1,0 +1,9 @@
+wandb==0.18.3
+tensorboardx
+qwen_vl_utils
+torchvision
+flash-attn --no-build-isolation 
+vllm==0.7.2
+nltk
+rouge_score
+deepspeed
