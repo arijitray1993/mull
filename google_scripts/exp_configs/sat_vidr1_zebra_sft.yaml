@@ -6,14 +6,14 @@ train_dataset_args:
     'SAT': 0.6
     'VideoR1': 0.2
     'ZebraCOT': 0.2
-  sat_location: '/home/jupyter/data_files/SAT_new'
-  video_r1_location: '/home/jupyter/data_files/Video-R1-data/Video-R1-COT-165k.json'
-  zebracot_location: '/home/jupyter/data_files/Zebra-CoT'
+  sat_location: 'array/SAT'
+  video_r1_location: '/projectnb/ivc-ml/Datasets/MLM_datasets/Video-R1-data/Video-R1-COT-165k.json'
+  zebracot_location: 'multimodal-reasoning-lab/Zebra-CoT'
   mode: 'train'
   no_reason_mode: True
 
 freeze_vision: True
 
 model_name: Qwen2.5-VL-7B
-model_path: /home/jupyter/checkpoints/sat_vidr1_zebra_sft/offline-run-20250917_214717-r7b4i36s/checkpoint-24000
+model_path: array/Qwen2.5-VL-SAT
 # model_path: /home/jupyter/data_files/Qwen2.5-VL-7B-Instruct

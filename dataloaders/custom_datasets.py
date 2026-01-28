@@ -392,9 +392,19 @@ class SAT(Dataset):
   def __init__(self, args):
     self.args = args
     split = args.get("split", "train")
-    dataset = load_dataset("parquet", data_files=os.path.join(args["sat_location"], f"SAT_{split}.parquet"))
 
-    self.sat_data = dataset[split]  # [args['split']]
+    # Load from HuggingFace if sat_location starts with a HF repo name, otherwise load local parquet
+    sat_location = args.get("sat_location", "array/SAT")
+    if "/" in sat_location and not os.path.exists(sat_location):
+      # Load from HuggingFace - dataset has images directly included
+      dataset = load_dataset(sat_location, trust_remote_code=True)
+      self.sat_data = dataset[split]
+      self.use_hf_images = True
+    else:
+      # Load from local parquet
+      dataset = load_dataset("parquet", data_files=os.path.join(sat_location, f"SAT_{split}.parquet"))
+      self.sat_data = dataset[split]
+      self.use_hf_images = False
 
     self.ind_to_letter = {
         0: "A",
@@ -413,17 +423,24 @@ class SAT(Dataset):
   def __getitem__(self, idx):
     entry = self.sat_data[idx]
 
-    images = entry["image_paths"]
-    # this is a list of images. Some questions are on one image,
-    # and some on 2 images
-
     multimedia_entry = []
-    for image in images:
-      im_path = os.path.join(self.args["sat_location"], image.split("SAT_new/")[-1])
-      multimedia_entry.append({
-          "data_type": "image",
-          "path": im_path,
-      })
+    if self.use_hf_images:
+      # Images come directly from HuggingFace dataset as PIL images
+      images = entry.get("images", [])
+      for image in images:
+        multimedia_entry.append({
+            "data_type": "image",
+            "image": image,  # PIL image directly
+        })
+    else:
+      # Load images from local paths
+      images = entry["image_paths"]
+      for image in images:
+        im_path = os.path.join(self.args["sat_location"], image.split("SAT_new/")[-1])
+        multimedia_entry.append({
+            "data_type": "image",
+            "path": im_path,
+        })
 
     question = entry["question"]
 

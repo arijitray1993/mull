@@ -34,7 +34,20 @@ def get_model(exp_confs, model_config):
             'transformers'
         ).Qwen2_5_VLForConditionalGeneration
 
-        model = Qwen2_5_VLForConditionalGeneration.from_pretrained(exp_confs["model_path"], **model_kwargs)
+        # Load config from checkpoint and fix vocab_size to match checkpoint weights
+        from transformers import PretrainedConfig
+        config = Qwen2_5_VLConfig.from_pretrained(exp_confs["model_path"])
+        config.vocab_size = 151669  # Match checkpoint embedding size
+
+        # Ensure text_config and vision_config are proper config objects (not dicts)
+        if isinstance(config.text_config, dict):
+            config.text_config = PretrainedConfig.from_dict(config.text_config)
+        if isinstance(config.vision_config, dict):
+            config.vision_config = PretrainedConfig.from_dict(config.vision_config)
+
+        model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            exp_confs["model_path"], config=config, **model_kwargs
+        )
         processor = AutoProcessor.from_pretrained(
             exp_confs["model_path"],
             trust_remote_code=model_config.trust_remote_code

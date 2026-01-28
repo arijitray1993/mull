@@ -1,14 +1,17 @@
 # needs to be run from root
 # bash google_scripts/launch_scripts/run_sat_vidr1_zebra_sft.sh
 
+# Load CUDA module and set CUDA_HOME for DeepSpeed
+module load cuda/12.5
+export CUDA_HOME=/share/pkg.8/cuda/12.5/install
+
 export DEBUG_MODE="true" # Enable Debug if you want to see the rollout of model during RL
 export LOG_PATH="./debug_log_2b.txt"
-export WANDB_MODE="offline"
 
 # set the exp config file
 EXP_CONFIG_FILE="../../google_scripts/exp_configs/sat_vidr1_zebra_sft.yaml"
 
-cd src/r1-v && CUDA_VISIBLE_DEVICES=0,1,2,3,4,5 torchrun --nproc_per_node="6" \
+cd src/r1-v && torchrun --nproc_per_node="6" \
     --nnodes="1" \
     --node_rank="0" \
     --master_addr="127.0.0.1" \

@@ -1,5 +1,6 @@
 # pylint: disable=all
 import importlib
+import os
 import time
 from typing import List, Optional, Tuple, Union
 import pdb
@@ -54,9 +55,11 @@ class LogExamples:
         self.latent_token_id = latent_token_id
         self.global_counter = 0
 
-        # Open a file to store the examples. 
+        # Open a file to store the examples.
         # Using .jsonl (JSON Lines) as the extension is standard for this format.
-        filepath = f"/home/jupyter/vis/examples_{self.run_id}.jsonl"
+        output_dir = "/projectnb/ivc-ml/array/research/visual_reasoning/mull-tokens/eval_outputs"
+        os.makedirs(output_dir, exist_ok=True)
+        filepath = f"{output_dir}/examples_{self.run_id}.jsonl"
         self.file = open(filepath, "w")
         print(f"[LogExamples] Logger initialized. Writing to {filepath}")
 
@@ -225,10 +228,12 @@ class Qwen2_5_VL_MMLatent_simple(lmms):
             self.reasoning_prompt = None
         self.processor = AutoProcessor.from_pretrained(pretrained, max_pixels=max_pixels, min_pixels=min_pixels)
 
-        self.processor.tokenizer.add_tokens("<|latent_pad|>", special_tokens=True)
-        self.processor.tokenizer.add_tokens("<|latent_start|>", special_tokens=True)
-        self.processor.tokenizer.add_tokens("<|latent_end|>", special_tokens=True)
-        self.processor.tokenizer.add_tokens("<|latent_image|>", special_tokens=True)
+        # Add tokens and track if any new tokens were added
+        num_added = 0
+        num_added += self.processor.tokenizer.add_tokens("<|latent_pad|>", special_tokens=True)
+        num_added += self.processor.tokenizer.add_tokens("<|latent_start|>", special_tokens=True)
+        num_added += self.processor.tokenizer.add_tokens("<|latent_end|>", special_tokens=True)
+        num_added += self.processor.tokenizer.add_tokens("<|latent_image|>", special_tokens=True)
 
         latent_token_idx = self.processor.tokenizer("<|latent_pad|>", return_tensors="pt")["input_ids"][0]
         latent_start_idx = self.processor.tokenizer("<|latent_start|>", return_tensors="pt")["input_ids"][0]
@@ -239,7 +244,9 @@ class Qwen2_5_VL_MMLatent_simple(lmms):
         self._model.config.latent_end_id = int(latent_end_idx)
         self._model.config.imagelatent_token_id = int(imagelatent_idx)
 
-        self._model.resize_token_embeddings(len(self.processor.tokenizer))
+        # Only resize embeddings if new tokens were added
+        if num_added > 0:
+            self._model.resize_token_embeddings(len(self.processor.tokenizer))
         self._tokenizer = AutoTokenizer.from_pretrained(pretrained)
         self.system_prompt = system_prompt
         self.interleave_visuals = interleave_visuals

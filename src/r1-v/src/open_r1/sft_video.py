@@ -60,6 +60,7 @@ import wandb
 
 from typing import List, Dict, Any
 
+'''
 class CopyCheckpointCallback(TrainerCallback):
     """
     After each checkpoint save, mirror the folder to `dest_root`.
@@ -100,6 +101,7 @@ class CopyCheckpointCallback(TrainerCallback):
             # copy wandb logs
             os.system(f"gsutil -m rsync -r /home/jupyter/wandb gs://xcloud-shared/arijitray/videoR1_checkpoints/wandb")
         return control
+'''
 
 @dataclass
 class CustomArguments:
@@ -129,10 +131,10 @@ if __name__ == "__main__":
     with open(exp_conf_file, 'r') as stream:
         exp_confs = yaml.safe_load(stream)
 
-    os.makedirs("/home/jupyter/checkpoints/", exist_ok=True)
+    os.makedirs("checkpoints/", exist_ok=True)
     
     run_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_dir = os.path.join("/home/jupyter/checkpoints/", exp_confs["run_name"], run_timestamp)
+    output_dir = os.path.join("checkpoints/", exp_confs["run_name"], run_timestamp)
     training_args.output_dir = output_dir
 
     exp_name = exp_confs["run_name"]
@@ -147,7 +149,7 @@ if __name__ == "__main__":
                     name=run_timestamp, # Give the run a clear name
                     dir=output_dir,     # Tell wandb to use our new directory
                 )
-    gs_path = f"gs://xcloud-shared/arijitray/videoR1_checkpoints/{exp_name}/{run_timestamp}"
+    # gs_path = f"gs://xcloud-shared/arijitray/videoR1_checkpoints/{exp_name}/{run_timestamp}"
     model_config.model_name_or_path = exp_confs["model_path"]
 
     # Setup model
@@ -178,9 +180,9 @@ if __name__ == "__main__":
     prepared_dataset = dataset # [prepare_dataset(example) for example in tqdm.tqdm(dataset)]
 
     # saving callback
-    copy_cb = CopyCheckpointCallback(
-        destination=gs_path,
-    )
+    #copy_cb = CopyCheckpointCallback(
+    #    destination=gs_path,
+    #)
 
     # Initialize trainer
     if exp_confs.get("stage") == "stage1":
@@ -191,7 +193,7 @@ if __name__ == "__main__":
             train_dataset=prepared_dataset,
             data_collator=collate_fn,
             peft_config=get_peft_config(model_config),
-            callbacks=[copy_cb],
+            # callbacks=[copy_cb],
             # processing_class=tokenizer
         )
     elif exp_confs.get("stage") == "stage2":
@@ -202,7 +204,7 @@ if __name__ == "__main__":
             train_dataset=prepared_dataset,
             data_collator=collate_fn,
             peft_config=get_peft_config(model_config),
-            callbacks=[copy_cb],
+            # callbacks=[copy_cb],
             # processing_class=tokenizer
         )
     else:
@@ -213,7 +215,7 @@ if __name__ == "__main__":
             train_dataset=prepared_dataset,
             data_collator=collate_fn,
             peft_config=get_peft_config(model_config),
-            callbacks=[copy_cb],
+            # callbacks=[copy_cb],
             # processing_class=tokenizer
         )
 

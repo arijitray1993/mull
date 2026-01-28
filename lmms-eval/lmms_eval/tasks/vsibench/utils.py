@@ -145,11 +145,12 @@ def fuzzy_matching(pred, gt, doc):
     ]
 
     ans_word = cleaned_pred
+    # Search in full prediction text, not the truncated cleaned_pred
     for pattern in patterns:
-        match = re.search(pattern, cleaned_pred, re.IGNORECASE)
+        match = re.search(pattern, pred, re.IGNORECASE)
         if match:
             # The match.group(1) returns the content of the first parenthesis
-            ans_word = match.group(1)
+            ans_word = match.group(1).strip()
 
     if ans_word.lower() not in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']:
         # extract a number from the answer

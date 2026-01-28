@@ -1,7 +1,7 @@
-dataset_path: /home/jupyter/data_files/VSI-Bench
+dataset_path: /projectnb/ivc-ml/Datasets/MLM_datasets/VSI-Bench
 dataset_kwargs:
   token: False
-  cache_dir: /home/jupyter/data_files/VSI-Bench
+  cache_dir: /projectnb/ivc-ml/Datasets/MLM_datasets/VSI-Bench
   video: True
 task: vsibench
 test_split: test
@@ -27,7 +27,7 @@ metric_list:
 
 lmms_eval_specific_kwargs:
   default:
-    prompt_mode: "videor1"
+    prompt_mode: "base"
   qwen2_5_vl_query:
     prompt_mode: "latents"
   qwen2_5_vl_mmlatent:

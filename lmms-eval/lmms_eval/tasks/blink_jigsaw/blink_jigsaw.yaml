@@ -1,4 +1,4 @@
-dataset_path: /home/jupyter/data_files/BLINK
+dataset_path: BLINK-Benchmark/BLINK
 dataset_name: "Jigsaw"
 task: "blink_jigsaw"
 dataset_kwargs:

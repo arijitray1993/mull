@@ -2,7 +2,8 @@ wandb==0.18.3
 tensorboardx
 qwen_vl_utils
 torchvision
-flash-attn --no-build-isolation 
+# flash-attn requires special installation - see README for instructions
+# flash-attn==2.5.9.post1
 vllm==0.7.2
 nltk
 rouge_score

@@ -10,15 +10,18 @@ export HF_HOME="~/.cache/huggingface"
 #     --model_args=pretrained=Qwen/Qwen2-VL-7B-Instruct,max_pixels=12845056,attn_implementation=flash_attention_2,interleave_visuals=True \
 #     --tasks mmmu_pro \
 #     --batch_size 1
-export WANDB_MODE="offline"
+export WANDB_MODE="online"
 
-accelerate launch --num_processes=8 --main_process_port=12346 -m lmms_eval \
+
+OUTPUT_DIR="/projectnb/ivc-ml/array/research/visual_reasoning/mull-tokens/eval_outputs/vsibench"
+
+accelerate launch --num_processes=2 --main_process_port=12346 -m lmms_eval \
     --model qwen2_5_vl \
-    --model_args=pretrained=/home/jupyter/data_files/Qwen2.5-VL-7B-Instruct,max_pixels=12845056,max_num_frames=16,attn_implementation=flash_attention_2,interleave_visuals=False \
+    --model_args=pretrained=Qwen/Qwen2.5-VL-7B-Instruct,max_pixels=12845056,max_num_frames=16,attn_implementation=flash_attention_2,interleave_visuals=False \
     --tasks vsibench \
     --batch_size 1 \
-    --output_path "/home/jupyter/vis/" \
-    --log_samples \
-    --wandb_args project=qwen25_base,name=baseline
+    --output_path "${OUTPUT_DIR}" \
+    --log_samples
+    --wandb_args project=qwen2vl_vsibench,name=vsibench_baseline
 
 # blink_sprel,blink_mv,blink_reldepth,blink_jigsaw,sat_real,vsibench,stare,erqa
