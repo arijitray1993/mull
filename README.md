@@ -1,5 +1,8 @@
 # Mull-Tokens: Multi-Modal Latent Tokens for Visual Reasoning
 
+[![arXiv](https://img.shields.io/badge/arXiv-2512.10941-b31b1b.svg)](https://arxiv.org/abs/2512.10941)
+[![Project Page](https://img.shields.io/badge/Project-Page-blue.svg)](https://arijitray.com/multimodal_thinking/)
+
 This repository contains the training and evaluation code for **Mull-Tokens**, a method that compresses visual information into discrete latent tokens for improved multi-modal reasoning with Qwen2.5-VL.
 
 ## Table of Contents
