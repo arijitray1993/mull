@@ -26,4 +26,4 @@ no_ref_model: False
 text_only_logprobs: True
 
 model_name: Qwen2.5-VL-7B-MMLatentDiscrete
-model_path: /home/jupyter/checkpoints/vidr1_sat_zebra_sft_mmlatent2discrete_qwenlatent1/2025-10-30_03-04-36/checkpoint-24000
+model_path: /home/jupyter/checkpoints/vidr1_sat_zebra_sft_mmlatent2discrete_qwenlatent1/2025-10-30_03-04-36/checkpoint-24000 # substtitute with your checkpoint path from stage 1

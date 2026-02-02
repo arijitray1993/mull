@@ -20,4 +20,4 @@ freeze_vision: True
 
 
 model_name: Qwen2.5-VL-7B-MMLatent
-model_path: /home/jupyter/data_files/Qwen2.5-VL-7B-Instruct
+model_path: Qwen/Qwen2.5-VL-7B-Instruct

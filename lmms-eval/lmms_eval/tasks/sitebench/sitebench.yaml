@@ -1,0 +1,43 @@
+dataset_path: franky-veteran/SITE-Bench
+dataset_name: image_test
+dataset_kwargs:
+  cache_dir: sitebench
+  video: True
+
+task: "sitebench"
+test_split: test
+process_docs: !function utils.process_docs
+output_type: generate_until
+doc_to_visual: !function utils.sitebench_doc_to_visual
+doc_to_text: !function utils.sitebench_doc_to_text
+doc_to_target: "answer"
+process_results: !function utils.sitebench_process_results
+
+generation_kwargs:
+  max_new_tokens: 1024
+  temperature: 0
+  top_p: 1.0
+  num_beams: 1
+  do_sample: false
+
+metric_list:
+  - metric: accuracy
+    aggregation: !function utils.sitebench_aggregate_results
+    higher_is_better: true
+
+metadata:
+  - version: 0.0
+
+lmms_eval_specific_kwargs:
+  default:
+    prompt_mode: "sft"
+  qwen2_5_vl_query:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatent:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatentsample:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatent_imonly:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatentdiscrete:
+    prompt_mode: "latents"

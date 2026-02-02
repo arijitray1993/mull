@@ -33,6 +33,42 @@ server_config = ServerConfig(
 server = get_server(server_name=API_TYPE, config=server_config)
 
 
+QUESTION_TEMPLATE_R1 = (
+    "{Question}\n"
+    "Please think about this question as if you were a human pondering deeply. "
+    "Engage in an internal dialogue using expressions such as 'let me think', "
+    "'wait', 'Hmm', 'oh, I see', 'let's break it down', etc, or other natural "
+    "language thought expressions. "
+    "It's encouraged to include self-reflection or verification in the reasoning "
+    "process. "
+    "Provide your detailed reasoning between the <think> </think> tags, and then "
+    "give your final answer between the <answer> </answer> tags."
+)
+
+QUESTION_TEMPLATE_LATENT = (
+    "{Question}\n"
+    "Please think about this question deeply. "
+    "It's encouraged to include self-reflection or verification in the reasoning "
+    "process. "
+    "Provide your final answer between the <answer> </answer> tags."
+)
+
+QUESTION_TEMPLATE_SFT = (
+    "{Question}\n"
+    "Provide your final answer between the <answer> </answer> tags."
+)
+
+MC_TYPE_TEMPLATE = (
+    " Please provide only the single option letter (e.g., A, B, C, D, etc.) "
+    "within the <answer> </answer> tags."
+)
+
+OPEN_TYPE_TEMPLATE = (
+    " Please provide a single word or phrase as the answer "
+    "within the <answer> </answer> tags."
+)
+
+
 def replace_images_tokens(input_string):
     for i in range(1, 8):
         question_text = f"<image {i}>"
@@ -48,28 +84,41 @@ def parse_options(options):
     return choices_str
 
 
-def construct_prompt(doc, mc_prompt="", open_ended_prompt="", prompt_type="reasoning"):
+def construct_prompt(doc):
+    """Construct the base question with options if multiple-choice."""
     question = doc["question"]
     if doc["question_type"] == "multiple-choice":
-        # Weirdly, data["options"] is a string in MMMU Huggingface dataset
         parsed_options = parse_options(ast.literal_eval(doc["options"]))
-        # parsed_options already prepends a newline so no need to add space here
-        question = f"{question}\n{parsed_options}\n\n{mc_prompt}"
-    else:
-        question = f"{question}\n\n{open_ended_prompt}"
-
+        question = f"{question}\n{parsed_options}"
     return question
 
 
 def mmmu_doc_to_text(doc, lmms_eval_specific_kwargs=None):
-    if lmms_eval_specific_kwargs is None:
-        question = construct_prompt(doc)
-    else:
-        question = construct_prompt(doc, lmms_eval_specific_kwargs["multiple_choice_prompt"], lmms_eval_specific_kwargs["open_ended_prompt"], lmms_eval_specific_kwargs["prompt_type"])
-    if config["metadata"]["interleaved_format"]:
-        question = replace_images_tokens(question)
+    prompt_mode = "sft"
+    if lmms_eval_specific_kwargs is not None:
+        prompt_mode = lmms_eval_specific_kwargs.get("prompt_mode", "sft")
 
-    return question
+    base_question = construct_prompt(doc)
+
+    # Select type template based on question type
+    if doc["question_type"] == "multiple-choice":
+        type_template = MC_TYPE_TEMPLATE
+    else:
+        type_template = OPEN_TYPE_TEMPLATE
+
+    if prompt_mode == "latents":
+        prompt = QUESTION_TEMPLATE_LATENT.format(Question=base_question) + type_template
+    elif prompt_mode == "videor1":
+        prompt = QUESTION_TEMPLATE_R1.format(Question=base_question) + type_template
+    elif prompt_mode == "sft":
+        prompt = QUESTION_TEMPLATE_SFT.format(Question=base_question) + type_template
+    else:
+        raise ValueError(f"Unknown prompt mode: {prompt_mode}")
+
+    if config["metadata"]["interleaved_format"]:
+        prompt = replace_images_tokens(prompt)
+
+    return prompt
 
 
 def mmmu_doc_to_messages(doc, lmms_eval_specific_kwargs=None):
@@ -90,23 +139,49 @@ def mmmu_doc_to_messages(doc, lmms_eval_specific_kwargs=None):
 
 
 def mmmu_doc_to_visual(doc):
-    prompt = construct_prompt(doc)
-    image_tokens = re.findall(r"<image \d+>", prompt)
-    # Remove <> and  swap space as _
+    # Find image tokens from the question
+    question = doc["question"]
+    image_tokens = re.findall(r"<image \d+>", question)
+    # Remove <> and swap space as _
     image_tokens = sorted(list(set([image_token.strip("<>").replace(" ", "_") for image_token in image_tokens])))
     visual = [doc[image_token].convert("RGB") for image_token in image_tokens]
     return visual
 
 
+def extract_answer_from_tags(pred):
+    """Extract answer from <answer>...</answer> tags if present."""
+    pattern = r"<answer>\s*(.*?)\s*</answer>"
+    match = re.search(pattern, pred, re.DOTALL | re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+    return None
+
+
 def mmmu_process_results(doc, results):
     parsed_preds = []
     for pred in results:
+        # First try to extract from <answer> tags
+        answer_from_tags = extract_answer_from_tags(pred)
+
         if doc["question_type"] == "multiple-choice":
-            index2ans, all_choices = get_multi_choice_info(ast.literal_eval(doc["options"]))
-            parsed_pred = parse_multi_choice_response(pred, all_choices, index2ans)
+            if answer_from_tags:
+                # Try to extract letter from answer tags content
+                letter_match = re.search(r"\b([A-Z])\b", answer_from_tags.upper())
+                if letter_match:
+                    parsed_pred = letter_match.group(1)
+                else:
+                    # Fallback to original parser
+                    index2ans, all_choices = get_multi_choice_info(ast.literal_eval(doc["options"]))
+                    parsed_pred = parse_multi_choice_response(pred, all_choices, index2ans)
+            else:
+                index2ans, all_choices = get_multi_choice_info(ast.literal_eval(doc["options"]))
+                parsed_pred = parse_multi_choice_response(pred, all_choices, index2ans)
         else:
-            parsed_pred = parse_open_response(pred)
-            parsed_pred = str(parsed_pred[0]) if parsed_pred else ""
+            if answer_from_tags:
+                parsed_pred = answer_from_tags
+            else:
+                parsed_pred = parse_open_response(pred)
+                parsed_pred = str(parsed_pred[0]) if parsed_pred else ""
         parsed_preds.append(parsed_pred)
     mmmu_submission = {doc["id"]: parsed_preds[0]}
     mmmu_exact_acc = {"id": doc["id"], "subdomain": extract_subset_name(doc["id"]), "question_type": doc["question_type"], "answer": doc["answer"], "parsed_pred": parsed_preds}

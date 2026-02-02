@@ -1,4 +1,4 @@
-dataset_path: /home/jupyter/data_files/SAT_new
+dataset_path: array/SAT-v2
 dataset_name: "sat_real"
 task: "sat_real"
 dataset_kwargs:
@@ -30,7 +30,7 @@ metadata:
 
 lmms_eval_specific_kwargs:
   default:
-    prompt_mode: "videor1"
+    prompt_mode: "sft"
   qwen2_5_vl_query:
     prompt_mode: "latents"
   qwen2_5_vl_mmlatent:

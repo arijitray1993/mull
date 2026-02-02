@@ -1,4 +1,4 @@
-dataset_path: /projectnb/ivc-ml/Datasets/MLM_datasets/VSI-Bench
+dataset_path: nyu-visionx/VSI-Bench
 dataset_kwargs:
   token: False
   cache_dir: /projectnb/ivc-ml/Datasets/MLM_datasets/VSI-Bench
@@ -27,7 +27,7 @@ metric_list:
 
 lmms_eval_specific_kwargs:
   default:
-    prompt_mode: "base"
+    prompt_mode: "sft"
   qwen2_5_vl_query:
     prompt_mode: "latents"
   qwen2_5_vl_mmlatent:

@@ -1,0 +1,71 @@
+dataset_path: RunsenXu/MMSI-Bench
+dataset_kwargs:
+  token: True
+
+task: "mmsi_bench"
+test_split: test
+output_type: generate_until
+doc_to_visual: !function utils.mmsi_doc_to_visual
+doc_to_text: !function utils.mmsi_doc_to_text
+doc_to_target: "answer"
+process_results: !function utils.mmsi_process_results
+
+generation_kwargs:
+  max_new_tokens: 2048
+  temperature: 0
+  do_sample: False
+
+metric_list:
+  - metric: Positional Relationship (Obj.–Obj.)
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: Positional Relationship (Cam.–Obj.)
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: Positional Relationship (Cam.–Cam.)
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: Positional Relationship (Obj.–Reg.)
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: Positional Relationship (Cam.–Reg.)
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: Positional Relationship (Reg.–Reg.)
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: Attribute (Meas.)
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: Attribute (Appr.)
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: Motion (Obj.)
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: Motion (Cam.)
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: MSR
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+  - metric: average
+    aggregation: !function utils.mmsi_aggregate_results
+    higher_is_better: true
+
+metadata:
+  - version: 0.0
+
+lmms_eval_specific_kwargs:
+  default:
+    prompt_mode: "sft"
+  qwen2_5_vl_query:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatent:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatentsample:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatent_imonly:
+    prompt_mode: "latents"
+  qwen2_5_vl_mmlatentdiscrete:
+    prompt_mode: "latents"
