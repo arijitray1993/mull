@@ -1,9 +1,19 @@
-# Mull-Tokens: Multi-Modal Latent Tokens for Visual Reasoning
+<p align="center">
+    <img src="images/mull_logo.png" width="40%"> <br>
+</p>
+
+
+# Modality-agnostic Latent Thinking
 
 [![arXiv](https://img.shields.io/badge/arXiv-2512.10941-b31b1b.svg)](https://arxiv.org/abs/2512.10941)
 [![Project Page](https://img.shields.io/badge/Project-Page-blue.svg)](https://arijitray.com/multimodal_thinking/)
+[![Model](https://img.shields.io/badge/Mull_Tokens-Model-yellow?logo=huggingface&logoColor=yellow)](https://huggingface.co/array/Qwen2.5-VL-Mull)
+[![Dataset](https://img.shields.io/badge/SAT-Dataset-yellow?logo=huggingface&logoColor=yellow)](https://huggingface.co/datasets/array/SAT-v2)
 
-This repository contains the training and evaluation code for **Mull-Tokens**, a method that compresses visual information into discrete latent tokens for improved multi-modal reasoning with Qwen2.5-VL.
+
+🌟 This repository contains the training and evaluation code for **Mull-Tokens**, a method that compresses textual and visual reasoning information into modality agnostic discrete latent tokens for improved multi-modal reasoning with Qwen2.5-VL.
+
+_Note: This release is a work in progress. If you find any errors or bugs, please email us or raise an issue and we will do our best to fix it._
 
 ## Table of Contents
 
@@ -30,13 +40,6 @@ This repository contains the training and evaluation code for **Mull-Tokens**, a
 ```bash
 pip install -r requirements/requirements.txt
 ```
-
-**Core dependencies:**
-- `wandb` - Experiment tracking
-- `deepspeed` - Distributed training
-- `vllm` - Fast inference
-- `qwen_vl_utils` - Vision processing
-- `nltk`, `rouge_score` - Evaluation metrics
 
 ### Flash Attention
 
@@ -88,7 +91,7 @@ export WANDB_MODE="online"  # or "offline" for local logging
 
 ## Minimal CLI Inference
 
-Quick inference with our pre-trained Mull-Tokens models.
+Minimal inference prompt format with our pre-trained Mull-Tokens models.
 
 ### Basic Usage
 
@@ -110,13 +113,33 @@ model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
 )
 processor = AutoProcessor.from_pretrained(MODEL_ID)
 
+
+image_path = "path/to/your/image.jpg"
+question = "If you stand at the X marked point and turn left, will the table be to your left or right? Please choose between the following answer choices: A. left. B. right. "
+question_type = "multiple choice"
+
+QUESTION_TEMPLATE_LATENT = (
+          "{Question}\n"
+          "Please think about this question deeply. "
+          "It's encouraged to include self-reflection or verification in the reasoning process. "
+          "Provide your final answer between the <answer> </answer> tags."
+      )
+TYPE_TEMPLATE = {
+          "multiple choice": " Please provide only the single option letter (e.g., A, B, C, D, etc.) within the <answer> </answer> tags.",
+          "numerical": " Please provide the numerical value (e.g., 42 or 3.14) within the <answer> </answer> tags.",
+          "OCR": " Please transcribe text from the image/video clearly and provide your text answer within the <answer> </answer> tags.",
+          "free-form": " Please provide your text answer within the <answer> </answer> tags.",
+          "regression": " Please provide the numerical value (e.g., 42 or 3.14) within the <answer> </answer> tags."
+      }
+prompt = QUESTION_TEMPLATE_LATENT.format(Question=question) + TYPE_TEMPLATE[question_type]
+
 # Prepare input with image
 messages = [
     {
         "role": "user",
         "content": [
             {"type": "image", "image": "path/to/your/image.jpg"},
-            {"type": "text", "text": "Describe this image in detail."},
+            {"type": "text", "text": "Describe this image."},
         ],
     },
     # IMPORTANT: Mull-Tokens requires latent thinking tokens before answer generation
@@ -197,9 +220,6 @@ messages = [
 ```
 
 
----
-
-
 ## Dataset Setup
 
 ### Training Datasets
@@ -263,13 +283,8 @@ video_r1_location: '/path/to/Video-R1-COT-165k.json'
 bash google_scripts/launch_scripts/run_sat_vidr1_zebra_sft.sh
 ```
 
-**Key settings:**
-- Dataset mix: SAT (60%), Video-R1 (20%), Zebra-CoT (20%)
-- 6 GPUs, DeepSpeed Zero-2
-- Learning rate: 1e-6
-- 1 epoch
 
-### 2. Mull-Tokens Stage 1 (Latent Compression)
+### 2. Mull-Tokens Stage 1: Multimodal warm-up for the mull-tokens.
 
 Trains the model to compress visual embeddings into 20 discrete latent tokens.
 
@@ -286,7 +301,7 @@ bash google_scripts/launch_scripts/run_vidr1_zebra_mmlatent1_qwenbase.sh
 ```
 
 
-### 3. Mull-Tokens Stage 2 (Discrete Latent Learning)
+### 3. Mull-Tokens Stage 2: Free-form optmizing mull-tokens based on final answer loss.
 
 Trains with discrete latent tokens from Stage 1.
 
@@ -406,8 +421,8 @@ If you use this code, please cite:
 
 ## Acknowledgments
 
-This work builds upon:
+This work builds upon the awesome work by:
 - [Qwen2.5-VL](https://github.com/QwenLM/Qwen2.5-VL)
 - [Video-R1](https://github.com/arijitray1993/Video-R1)
 - [lmms-eval](https://github.com/EvolvingLMMs-Lab/lmms-eval)
-- [MIRAGE] (https://github.com/UMass-Embodied-AGI/Mirage)
+- [MIRAGE](https://github.com/UMass-Embodied-AGI/Mirage)
