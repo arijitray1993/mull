@@ -13,7 +13,8 @@
 
 🌟 This repository contains the training and evaluation code for **Mull-Tokens**, a method that compresses textual and visual reasoning information into modality agnostic discrete latent tokens for improved multi-modal reasoning with Qwen2.5-VL.
 
-_Note: This release is a work in progress. If you find any errors or bugs, please email us or raise an issue and we will do our best to fix it._
+## 💥 News 
+- **[2026.2.4]** Code for training and evaluations released! _This initial release is a work in progress. If you find any errors or bugs, please email us or raise an issue and we will do our best to fix it._ 
 
 ## Table of Contents
 
@@ -31,7 +32,7 @@ _Note: This release is a work in progress. If you find any errors or bugs, pleas
 - [Evaluation](#evaluation)
 - [Configuration Reference](#configuration-reference)
 
----
+
 
 ## Installation
 
@@ -219,7 +220,7 @@ messages = [
 ]
 ```
 
-
+---
 ## Dataset Setup
 
 ### Training Datasets
@@ -263,6 +264,7 @@ Recommended: Keep the online huggingface dataset links.
 If using an offline local setup, update the paths in `lmms-eval/lmms_eval/tasks/*/` YAML files to match your local setup.
 
 
+----
 ## Training
 
 All training scripts should be run from the repository root directory. 
