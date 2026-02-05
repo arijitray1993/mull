@@ -13,6 +13,8 @@
 
 🌟 This repository contains the training and evaluation code for **Mull-Tokens**, a method that compresses textual and visual reasoning information into modality agnostic discrete latent tokens for improved multi-modal reasoning with Qwen2.5-VL.
 
+📈 This is also a great template to train Qwen style models and evaluate using lmms-eval all-in-one.  
+
 ## 💥 News 
 - **[2026.2.4]** Code for training and evaluations released! _This initial release is a work in progress. If you find any errors or bugs, please email us or raise an issue and we will do our best to fix it._ 
 
