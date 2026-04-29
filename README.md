@@ -287,6 +287,8 @@ video_r1_location: '/path/to/Video-R1-COT-165k.json'
 bash google_scripts/launch_scripts/run_sat_vidr1_zebra_sft.sh
 ```
 
+We do this for 48000 steps on 8 H100 GPUs (data parallel).
+
 
 ### 2. Mull-Tokens Stage 1: Multimodal warm-up for the mull-tokens.
 
@@ -304,6 +306,7 @@ video_r1_location: '/path/to/Video-R1-COT-165k.json'
 bash google_scripts/launch_scripts/run_vidr1_zebra_mmlatent1_qwenbase.sh
 ```
 
+We do this for 24000 steps on 8 H100 GPU's (data parallel) in the paper. 
 
 ### 3. Mull-Tokens Stage 2: Free-form optmizing mull-tokens based on final answer loss.
 
@@ -320,6 +323,8 @@ Trains with discrete latent tokens from Stage 1.
 bash google_scripts/launch_scripts/run_sft_qwenlatent1_vidr1_SAT_zebra_mmlatent_stage2discrete.sh
 ```
 
+We do this for 24000 steps (on top of stage 1 checkpoint) on 8 H100 GPU's (data parallel) in the paper.
+
 ### 4. GRPO (Reinforcement Learning)
 
 Optimizes with Group Relative Policy Optimization.
@@ -334,6 +339,8 @@ Optimizes with Group Relative Policy Optimization.
 ```bash
 bash google_scripts/launch_scripts/run_grpo_sat_vidr1_zebra_qwenlatent2discrete_1.sh
 ```
+
+ We only do a couple 100 updates of GRPO with group size 2 and a gradient accumulated batch size of 32. 
 
 ---
 
