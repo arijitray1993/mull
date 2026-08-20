@@ -90,7 +90,58 @@ client.chat.completions.create(
   and appends the last frame. vLLM's processor does not do this; pre-sample
   frames client-side to match.
 
-## 4. Verifying a deployment
+## 4. Measured results
+
+24 SAT test items (shuffled choices, A=13/B=11), one L40S, vLLM 0.11.2 vs the
+HF fork path, `max_tokens=256`. `prompt=` counts prompts whose token ids are
+byte-identical to the reference; `text=` identical generations.
+
+Matched preprocessing (401408 px both sides):
+
+| variant | prompt= | text= | answer= | acc | latent | img tok |
+|---|---|---|---|---|---|---|
+| `hf_deflt` (reference) | 24/24 | 24/24 | 24/24 | 20/24 | 20 | 988 |
+| vLLM, minimal fix, **no chat template** | 0/24 | 0/24 | 19/24 | 17/24 | **0** | 988 |
+| vLLM, minimal fix, **with** the template | 24/24 | 23/24 | 23/24 | 19/24 | 20 | 988 |
+
+Matched preprocessing (12845056 px both sides):
+
+| variant | prompt= | text= | answer= | acc | latent | img tok |
+|---|---|---|---|---|---|---|
+| `hf_full` (reference) | 24/24 | 24/24 | 24/24 | 22/24 | 20 | 31104 |
+| vLLM, full recipe | 24/24 | 23/24 | 23/24 | 21/24 | 20 | 31104 |
+
+**vLLM reproduces the HF path.** Prompt token ids are identical 24/24 whenever
+both sides use the same preprocessing; generations agree 23/24, the single
+divergence being the expected bf16 / fast-image-processor noise.
+
+**Serving without the chat template is a different model.** It loads and
+answers, and the answers agree with the reference 19/24 — which is why it looks
+fine in a demo — but the model gets zero latent tokens and falls back to
+thinking in text:
+
+| | mean output tokens | textual `THOUGHT` chains | no `<answer>` within 256 tok |
+|---|---|---|---|
+| with latent template | 8.9 | 0/24 | 0/24 |
+| without | **101.2** | **24/24** | 2/24 |
+
+That is ~11x the decode cost per request and an 8% truncation rate, on top of
+bypassing the mechanism the checkpoint was trained for. Accuracy differences on
+24 items are within noise; the behavioural difference is not.
+
+## 5. Two traps that will silently corrupt a comparison
+
+1. **The repo's vendored `src/qwen-vl-utils` sets `MAX_PIXELS = 256*28*28
+   (200704)`**, against 12845056 in the installed `qwen-vl-utils` 0.0.14. If it
+   lands on `sys.path` ahead of site-packages, images are downscaled ~64x
+   (234 image tokens instead of 15552) and every comparison against vLLM is
+   meaningless. `check_vllm_parity.py` asserts against this.
+2. **`mull_tokens` (torch 2.5.1+cu124, flash-attn 2.5.9) cannot run on the
+   Blackwell nodes** (`RTX PRO 6000`, sm_120): `CUDA error: no kernel image is
+   available for execution on the device`. Pin `-l gpu_type=L40S` (or A100/A40/
+   A6000) for anything using that env. The vLLM env (torch 2.9) is fine there.
+
+## 6. Verifying a deployment
 
 `serving/check_vllm_parity.py` runs the same SAT samples through the HF
 reference path (the fork's `mmlatentdiscrete_qwen_vl` class, as lmms-eval loads
@@ -98,10 +149,16 @@ it) and through vLLM, then diffs prompt token ids, generated text, and answers:
 
 ```bash
 python serving/check_vllm_parity.py prep --work-dir WORK --num-samples 24
-<fork env>/python serving/check_vllm_parity.py run --backend hf   --work-dir WORK
-<vllm env>/python serving/check_vllm_parity.py run --backend vllm --work-dir WORK
-python serving/check_vllm_parity.py compare --work-dir WORK
+<fork env>/python serving/check_vllm_parity.py run --backend hf --work-dir WORK \
+    --tag hf_full --template mull --max-pixels 12845056
+<vllm env>/python serving/check_vllm_parity.py run --backend vllm --work-dir WORK \
+    --tag vllm_full --template mull --max-pixels 12845056
+python serving/check_vllm_parity.py compare --work-dir WORK --ref hf_full --others vllm_full
 ```
+
+`--template default` serves the checkpoint's own template (no latent tokens) and
+`--max-pixels 0` uses the checkpoint's own 401408, so the table above is
+reproducible variant by variant.
 
 The two backends need separate environments: the HF path requires the Video-R1
 transformers fork, vLLM requires stock transformers.

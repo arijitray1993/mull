@@ -57,6 +57,9 @@ def main():
     ap.add_argument("--repo", default="array/Qwen2.5-VL-Mull")
     ap.add_argument("--out", required=True, help="directory to write the vLLM-ready copy into")
     ap.add_argument("--weights", choices=["symlink", "copy", "skip"], default="symlink")
+    ap.add_argument("--minimal", action="store_true",
+                    help="apply ONLY the image_processor_type fix; leave config.json as published "
+                         "(keeps auto_map and the defaults-dependent vision_config)")
     args = ap.parse_args()
 
     patterns = list(SMALL_FILES) + (["*.safetensors"] if args.weights != "skip" else [])
@@ -85,6 +88,14 @@ def main():
         json.dump(prep, open(prep_path, "w"), indent=2, sort_keys=True)
 
     config = json.load(open(os.path.join(src, "config.json")))
+    if args.minimal:
+        with open(os.path.join(src, "config.json"), "rb") as f_in, \
+             open(os.path.join(args.out, "config.json"), "wb") as f_out:
+            f_out.write(f_in.read())
+        print(f"source snapshot : {src}")
+        print(f"served copy     : {args.out}  (minimal: image_processor_type only)")
+        print(f"image_processor : {old_ip} -> {prep['image_processor_type']}")
+        return
     assert config.get("stage") == "stage2", (
         f"expected a stage-2 checkpoint, got stage={config.get('stage')!r}. "
         "Stage-1 checkpoints feed continuous hidden states back into the embedding "
