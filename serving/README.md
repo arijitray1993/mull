@@ -140,6 +140,22 @@ Matched preprocessing (12845056 px both sides):
 both sides use the same preprocessing; generations agree 23/24, the single
 divergence being the expected bf16 / fast-image-processor noise.
 
+**The staged checkpoint fix (section 0) serves correctly with no flags.** Its
+prompt is not byte-identical to the eval harness's, because the published
+template keeps `<|im_end|>` after each turn (the training format) while the
+harness strips every one of them -- 4 extra tokens. Measured, that costs 1-2
+generations out of 24 and nothing in accuracy:
+
+| variant (401408 px) | prompt= | text= | answer= | acc | latent |
+|---|---|---|---|---|---|
+| `hf_deflt` (reference, eval format) | 24/24 | 24/24 | 24/24 | 20/24 | 20 |
+| vLLM, eval-format template | 24/24 | 23/24 | 23/24 | 19/24 | 20 |
+| vLLM, **staged repo files, zero flags** | 0/24 | 22/24 | 22/24 | 20/24 | 20 |
+
+Compared directly against the eval-format vLLM run, the `<|im_end|>` difference
+moves 1 generation of 24. Use the template file (section 2) to reproduce
+published benchmark numbers exactly; the checkpoint fix is for serving.
+
 **Serving without the chat template is a different model.** It loads and
 answers, and the answers agree with the reference 19/24 — which is why it looks
 fine in a demo — but the model gets zero latent tokens and falls back to
