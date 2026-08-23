@@ -5,6 +5,8 @@
       3. every "<|im_end|>\n" stripped (the eval harness does text.replace("<|im_end|>\n", ""))
     N defaults to 20 and can be overridden per request with
       "chat_template_kwargs": {"num_latents": 32}
+    num_latents=0 emits a plain assistant turn with no latent block, for
+    ablations against the non-latent behaviour.
 #}
 {%- set num_latents = num_latents | default(20) -%}
 {%- set image_count = namespace(value=0) -%}
@@ -29,4 +31,4 @@ You are a helpful assistant.{% endif %}<|im_start|>{{ message['role'] }}
 {%- endif -%}
 {%- endfor -%}
 <|im_start|>assistant
-<think>{{ '<|latent_pad|>' * num_latents }}</think>{{ '\n' }}
+{% if num_latents > 0 %}<think>{{ '<|latent_pad|>' * num_latents }}</think>{{ '\n' }}{% endif %}

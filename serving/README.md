@@ -15,6 +15,31 @@ What it does need: two config fixes and one chat template.
 > Stage-1 checkpoints feed continuous hidden states back into the embedding
 > stream and would need a custom vLLM model plugin.
 
+## 0. Fixing the checkpoint itself (recommended)
+
+`serving/patch_hf_repo.py` stages the four files that make
+`vllm serve array/Qwen2.5-VL-Mull` work with **no flags at all**, and prints the
+diff plus the upload commands. It uploads nothing.
+
+```bash
+python serving/patch_hf_repo.py --out /path/to/staging
+```
+
+| file | change |
+|---|---|
+| `preprocessor_config.json` | `image_processor_type` -> `Qwen2VLImageProcessor` |
+| `chat_template.jinja` + `.json` | the `add_generation_prompt` branch pre-fills `<think>` + 20 x `<|latent_pad|>` + `</think>` |
+| `config.json` | `vision_config` written out explicitly (`auto_map` deliberately kept) |
+
+The template change is guarded by `add_generation_prompt`, so calls that pass an
+explicit assistant message -- training (`dataloaders/custom_datasets.py`) and
+lmms-eval -- render byte-identically to today. `num_latents` is overridable per
+request (`chat_template_kwargs`), and `num_latents=0` gives a plain assistant
+turn for non-latent ablations.
+
+If you would rather not touch the checkpoint, sections 1-3 do the same thing
+with local files and server flags.
+
 ## 1. Build a vLLM-ready copy
 
 ```bash
