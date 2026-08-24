@@ -1,0 +1,34 @@
+{#- Mull-Tokens serving template for array/Qwen2.5-VL-Mull.
+    Reproduces the prompt built by lmms_eval/models/chat/qwen2_5_vl_mmlatentdiscrete.py:
+      1. standard Qwen2.5-VL chat rendering
+      2. an assistant turn pre-filled with "<think>" + N * "<|latent_pad|>" + "</think>\n"
+      3. every "<|im_end|>\n" stripped (the eval harness does text.replace("<|im_end|>\n", ""))
+    N defaults to 20 and can be overridden per request with
+      "chat_template_kwargs": {"num_latents": 32}
+    num_latents=0 emits a plain assistant turn with no latent block, for
+    ablations against the non-latent behaviour.
+#}
+{%- set num_latents = num_latents | default(20) -%}
+{%- set image_count = namespace(value=0) -%}
+{%- set video_count = namespace(value=0) -%}
+{%- for message in messages -%}
+{%- if loop.first and message['role'] != 'system' -%}<|im_start|>system
+You are a helpful assistant.{% endif %}<|im_start|>{{ message['role'] }}
+{% if message['content'] is string %}{{ message['content'] }}{% else %}
+{%- for content in message['content'] -%}
+{%- if content['type'] == 'image' or 'image' in content or 'image_url' in content -%}
+{%- set image_count.value = image_count.value + 1 -%}
+{%- if add_vision_id %}Picture {{ image_count.value }}: {% endif -%}
+<|vision_start|><|image_pad|><|vision_end|>
+{%- elif content['type'] == 'video' or 'video' in content -%}
+{%- set video_count.value = video_count.value + 1 -%}
+{%- if add_vision_id %}Video {{ video_count.value }}: {% endif -%}
+<|vision_start|><|video_pad|><|vision_end|>
+{%- elif 'text' in content -%}
+{{ content['text'] }}
+{%- endif -%}
+{%- endfor -%}
+{%- endif -%}
+{%- endfor -%}
+<|im_start|>assistant
+{% if num_latents > 0 %}<think>{{ '<|latent_pad|>' * num_latents }}</think>{{ '\n' }}{% endif %}
