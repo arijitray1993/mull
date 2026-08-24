@@ -15,6 +15,15 @@ What it does need: two config fixes and one chat template.
 > Stage-1 checkpoints feed continuous hidden states back into the embedding
 > stream and would need a custom vLLM model plugin.
 
+> **Status: shipped.** The checkpoint fixes below are live in
+> [`array/Qwen2.5-VL-Mull`](https://huggingface.co/array/Qwen2.5-VL-Mull) as of
+> 2026-08-24, so `vllm serve array/Qwen2.5-VL-Mull` works with no flags. The
+> model card documents it, and the vLLM recipe is at
+> [vllm-project/recipes#840](https://github.com/vllm-project/recipes/pull/840)
+> (source kept here as `vllm_recipe_Qwen2.5-VL-Mull.yaml`). `prepare_for_vllm.py`
+> and the sections below remain useful for pinned older copies of the checkpoint
+> and for reproducing the eval-format prompt exactly.
+
 ## 0. Fixing the checkpoint itself (recommended)
 
 `serving/patch_hf_repo.py` stages the four files that make
